@@ -7,7 +7,7 @@ export async function runEveryMinute(meta) {
         console.info('Resolved ingestion alert', activeAlertKey)
     } else if (!activeAlertKey && isInError) {
         const key = await triggerAlert(meta)
-        console.warn('Triggered ingesion alert', key)
+        console.warn('Triggered ingestion alert', key)
     } else if (isInError) {
         console.warn('Ingestion alert is already active')
     } else {
@@ -54,8 +54,21 @@ async function triggerWebHook(meta, status){
         webHookUrl = meta.config.webHookUrlResolved
     }
 
-    const response = await fetch(webHookUrl)
-    
+    let response
+    switch (meta.config.webHookHttpMethod) {
+        case 'GET':
+            response = await fetch(webHookUrl)
+            break;
+        case 'POST':
+            response = await fetch(webHookUrl, {
+                method: 'POST',
+                body: meta.config.webHookHttpPayload
+            })
+            break;
+        default:
+            throw Error(`HTTP method passed in plugin configuration is not supported: ${meta.config.webHookHttpMethod}.`);
+    }
+
     if (!response.ok) {
         throw Error(`Error from WebHook: status=${response.status} response=${await response.text()}`)
     }
