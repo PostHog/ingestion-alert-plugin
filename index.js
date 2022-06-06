@@ -60,6 +60,11 @@ async function triggerWebHook(meta, status){
             response = await fetch(webHookUrl)
             break;
         case 'POST':
+            let payloadSize = getStringSizeInBytes(meta.config.webHookHttpPayload);
+            // size of payload is restricted to 16 kilobytes.
+            if (payloadSize > 16 * 1000) {
+                throw Error(`Payload cannot exceed 16 kilobytes, got size: ${payloadSize}`);
+            }
             response = await fetch(webHookUrl, {
                 method: 'POST',
                 body: meta.config.webHookHttpPayload
@@ -81,4 +86,8 @@ function eventsApiUrl(instanceURL, timeRange) {
     let url = new URL(`${instanceURL}/api/event?after=${time_from}`)
     url.searchParams.set('refresh', 'true')
     return url.href
+}
+
+function getStringSizeInBytes(string) {
+    return Buffer.byteLength(string, 'utf8');
 }
