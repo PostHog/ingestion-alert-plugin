@@ -7,7 +7,7 @@ export async function runEveryMinute(meta) {
         console.info('Resolved ingestion alert', activeAlertKey)
     } else if (!activeAlertKey && isInError) {
         const key = await triggerAlert(meta)
-        console.warn('Triggered ingesion alert', key)
+        console.warn('Triggered ingestion alert', key)
     } else if (isInError) {
         console.warn('Ingestion alert is already active')
     } else {
@@ -54,8 +54,26 @@ async function triggerWebHook(meta, status){
         webHookUrl = meta.config.webHookUrlResolved
     }
 
-    const response = await fetch(webHookUrl)
-    
+    let response
+    switch (meta.config.webHookHttpMethod) {
+        case 'GET':
+            response = await fetch(webHookUrl)
+            break;
+        case 'POST':
+            let payloadSize = getStringSizeInBytes(meta.config.webHookHttpPayload);
+            // size of payload is restricted to 16 kilobytes.
+            if (payloadSize > 16 * 1000) {
+                throw Error(`Payload cannot exceed 16 kilobytes, got size: ${payloadSize}`);
+            }
+            response = await fetch(webHookUrl, {
+                method: 'POST',
+                body: meta.config.webHookHttpPayload
+            })
+            break;
+        default:
+            throw Error(`HTTP method passed in plugin configuration is not supported: ${meta.config.webHookHttpMethod}.`);
+    }
+
     if (!response.ok) {
         throw Error(`Error from WebHook: status=${response.status} response=${await response.text()}`)
     }
@@ -68,4 +86,8 @@ function eventsApiUrl(instanceURL, timeRange) {
     let url = new URL(`${instanceURL}/api/event?after=${time_from}`)
     url.searchParams.set('refresh', 'true')
     return url.href
+}
+
+function getStringSizeInBytes(string) {
+    return Buffer.byteLength(string, 'utf8');
 }

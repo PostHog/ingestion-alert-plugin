@@ -33,6 +33,22 @@
           "required": true
         },
         {
+          "key": "webHookHttpMethod",
+          "hint": "HTTP method used in the webhook triggered when no new events have been detected in the set time range",
+          "name": "WebHook HTTP Method",
+          "type": "choice",
+          "choices": ["GET", "POST"],
+          "default": "GET",
+          "required": true
+        },
+        {
+          "key": "webHookHttpPayload",
+          "hint": "HTTP payload (body) used in the webhook when POST HTTP method is used in the webhook configuration",
+          "name": "WebHook HTTP Payload",
+          "type": "string",
+          "required": false
+        },
+        {
           "key": "posthogApiKey",
           "hint": "Your Personal API Key is not the same as the Project API key",
           "name": "PostHog API Key",
